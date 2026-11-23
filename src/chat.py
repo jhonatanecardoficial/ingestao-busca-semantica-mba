@@ -1,7 +1,9 @@
+"""Interface CLI interativa para realizar perguntas sobre o PDF ingerido."""
+
 import sys
 from pathlib import Path
 
-# Garantir import de search.py
+# Garantir import de search.py independentemente do diretório de execução
 current_dir = Path(__file__).resolve().parent
 if str(current_dir) not in sys.path:
     sys.path.append(str(current_dir))
@@ -9,11 +11,12 @@ if str(current_dir) not in sys.path:
 from search import search_prompt
 
 
-def main():
+def main() -> None:
+    """Inicializa a chain de busca RAG e executa o loop interativo no terminal."""
     try:
         chain = search_prompt()
-    except Exception as e:
-        print(f"Erro ao inicializar o serviço de busca: {e}")
+    except Exception as exc:
+        print(f"Erro ao inicializar o serviço de busca: {exc}")
         return
 
     if not chain:
@@ -26,7 +29,7 @@ def main():
             pergunta = input("\nPERGUNTA: ").strip()
             if not pergunta:
                 continue
-            if pergunta.lower() in ["sair", "exit", "quit"]:
+            if pergunta.lower() in {"sair", "exit", "quit"}:
                 print("Encerrando o chat.")
                 break
 
@@ -35,8 +38,8 @@ def main():
         except (KeyboardInterrupt, EOFError):
             print("\nEncerrando o chat.")
             break
-        except Exception as e:
-            print(f"Erro ao processar pergunta: {e}")
+        except Exception as exc:
+            print(f"Erro ao processar pergunta: {exc}")
 
 
 if __name__ == "__main__":

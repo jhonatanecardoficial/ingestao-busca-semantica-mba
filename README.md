@@ -25,11 +25,13 @@ ingestao-busca-semantica-mba/
 ├── .env.example         # Template com todas as variáveis de ambiente necessárias
 ├── document.pdf         # Arquivo PDF base para ingestão
 ├── README.md            # Documentação e instruções de execução
-├── PLANO.md             # Plano detalhado de resolução do desafio
-└── src/
-    ├── ingest.py        # Pipeline de carregamento, chunking e gravação vetorial
-    ├── search.py        # Busca semântica (k=10), montagem do prompt e chamada LLM
-    └── chat.py          # Interface de chat interativa via terminal (CLI)
+├── TESTES.md            # Documentação e evidências da suíte de testes
+├── src/
+│   ├── ingest.py        # Pipeline de carregamento, chunking e gravação vetorial
+│   ├── search.py        # Busca semântica (k=10), montagem do prompt e chamada LLM
+│   └── chat.py          # Interface de chat interativa via terminal (CLI)
+└── tests/
+    └── test_rag.py      # Suíte de testes automatizados
 ```
 
 ---
@@ -40,7 +42,7 @@ ingestao-busca-semantica-mba/
 - **Framework RAG**: LangChain (`langchain`, `langchain-community`, `langchain-text-splitters`, `langchain-postgres`)
 - **Provedores de IA Suportados**:
   - **OpenAI**: `OpenAIEmbeddings` (`text-embedding-3-small`) e `ChatOpenAI` (`gpt-4o-mini`)
-  - **Google Gemini**: `GoogleGenerativeAIEmbeddings` (`models/text-embedding-004`) e `ChatGoogleGenerativeAI` (`gemini-1.5-flash`)
+  - **Google Gemini**: `GoogleGenerativeAIEmbeddings` (`models/gemini-embedding-001`) e `ChatGoogleGenerativeAI` (`gemini-2.5-flash`)
 - **Banco de Dados Vetorial**: PostgreSQL 17 com extensão `pgVector` (`pgvector/pgvector:pg17`)
 - **Containerização**: Docker e Docker Compose
 
@@ -120,8 +122,8 @@ PDF_PATH=document.pdf
 ```env
 LLM_PROVIDER=gemini
 GOOGLE_API_KEY=sua-chave-google-aqui
-GOOGLE_EMBEDDING_MODEL='models/text-embedding-004'
-GOOGLE_CHAT_MODEL='gemini-1.5-flash'
+GOOGLE_EMBEDDING_MODEL='models/gemini-embedding-001'
+GOOGLE_CHAT_MODEL='gemini-2.5-flash'
 
 POSTGRES_PORT=5432
 DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/rag
