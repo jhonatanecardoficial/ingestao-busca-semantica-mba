@@ -1,155 +1,232 @@
-# Ingestão e Busca Semântica com LangChain e Postgres
+# Ingestão e Busca Semântica com LangChain e PostgreSQL (pgVector)
 
-## Objetivo
+Desafio técnico do **MBA em Engenharia de Software com IA** — Full Cycle.  
+Módulo: **Introdução ao LangChain**
 
-Você deve entregar um software capaz de:
-
-- Ingestão: Ler um arquivo PDF e salvar suas informações em um banco de dados PostgreSQL com extensão pgVector.
-- Busca: Permitir que o usuário faça perguntas via linha de comando (CLI) e receba respostas baseadas apenas no conteúdo do PDF.
-
-## Exemplo no CLI
-
-Faça sua pergunta:
-
-```
-PERGUNTA: Qual o faturamento da Empresa SuperTechIABrazil?
-RESPOSTA: O faturamento foi de 10 milhões de reais.
+Repositório: [https://github.com/jhonatanecardoficial/ingestao-busca-semantica-mba](https://github.com/jhonatanecardoficial/ingestao-busca-semantica-mba)
 
 ---
 
-Perguntas fora do contexto:
+## 🎯 Objetivo
 
-PERGUNTA: Quantos clientes temos em 2024?
-RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+Implementar uma aplicação RAG (*Retrieval-Augmented Generation*) em Python utilizando o framework **LangChain** e o banco de dados **PostgreSQL** com a extensão **pgVector**, capaz de:
+
+1. **Ingestão**: Carregar um arquivo PDF (`document.pdf`), dividi-lo em chunks padronizados, gerar embeddings e persistir os vetores no PostgreSQL com `pgVector`.
+2. **Busca Semântica & CLI**: Permitir que o usuário faça perguntas no terminal e receba respostas baseadas **estritamente** no contexto do documento, recusando responder qualquer pergunta com informação ausente.
+
+---
+
+## 🏗️ Estrutura do Projeto
+
+```text
+ingestao-busca-semantica-mba/
+├── docker-compose.yml   # Definição do serviço PostgreSQL 17 + extensão pgVector
+├── requirements.txt     # Dependências do projeto (LangChain, pgvector, psycopg, etc.)
+├── .env.example         # Template com todas as variáveis de ambiente necessárias
+├── document.pdf         # Arquivo PDF base para ingestão
+├── README.md            # Documentação e instruções de execução
+├── PLANO.md             # Plano detalhado de resolução do desafio
+└── src/
+    ├── ingest.py        # Pipeline de carregamento, chunking e gravação vetorial
+    ├── search.py        # Busca semântica (k=10), montagem do prompt e chamada LLM
+    └── chat.py          # Interface de chat interativa via terminal (CLI)
 ```
 
-## Tecnologias obrigatórias
+---
 
-- Linguagem: Python
-- Framework: LangChain
-- Banco de dados: PostgreSQL + pgVector
-- Execução do banco de dados: Docker & Docker Compose (docker-compose fornecido no repositório de exemplo)
+## 🛠️ Tecnologias Utilizadas
 
-## Pacotes recomendados
+- **Linguagem**: Python (versão 3.10 ou superior)
+- **Framework RAG**: LangChain (`langchain`, `langchain-community`, `langchain-text-splitters`, `langchain-postgres`)
+- **Provedores de IA Suportados**:
+  - **OpenAI**: `OpenAIEmbeddings` (`text-embedding-3-small`) e `ChatOpenAI` (`gpt-4o-mini`)
+  - **Google Gemini**: `GoogleGenerativeAIEmbeddings` (`models/text-embedding-004`) e `ChatGoogleGenerativeAI` (`gemini-1.5-flash`)
+- **Banco de Dados Vetorial**: PostgreSQL 17 com extensão `pgVector` (`pgvector/pgvector:pg17`)
+- **Containerização**: Docker e Docker Compose
 
-- Split: `from langchain_text_splitters import RecursiveCharacterTextSplitter`
-- Embeddings (OpenAI): `from langchain_openai import OpenAIEmbeddings`
-- Embeddings (Gemini): `from langchain_google_genai import GoogleGenerativeAIEmbeddings`
-- PDF: `from langchain_community.document_loaders import PyPDFLoader`
-- Ingestão: `from langchain_postgres import PGVector`
-- Busca: `similarity_search_with_score(query, k=10)`
+---
 
-## OpenAI
+## 📋 Pré-requisitos
 
-- Crie uma API Key da OpenAI.
-- Você vai precisar de um modelo de embeddings e de um modelo de LLM para responder. Consulte a documentação oficial da OpenAI para ver os modelos disponíveis.
+Antes de iniciar, certifique-se de ter instalado em sua máquina:
 
-## Gemini
+- [Git](https://git-scm.com/)
+- [Python 3.10+](https://www.python.org/)
+- [Docker](https://www.docker.com/) e [Docker Compose](https://docs.docker.com/compose/)
+- Uma chave de API da **OpenAI** ou do **Google Gemini**
 
-- Crie uma API Key da Google.
-- Você vai precisar de um modelo de embeddings e de um modelo de LLM para responder. Consulte a documentação oficial do Google para ver os modelos disponíveis.
+---
 
-Os limites de requisições gratuitas dos modelos podem mudar com frequência. Para informações atualizadas, consulte a documentação oficial do Google.
+## 🚀 Guia Passo a Passo de Execução
 
-## Escolha dos modelos
+### 1. Clonar o Repositório
 
-Este desafio não fixa modelos. Nomes e versões mudam com frequência e alguns são descontinuados, então faz parte do desafio consultar a documentação oficial do provedor que você escolher, ver quais modelos estão disponíveis no momento e selecionar os que atendem ao objetivo. Para o volume deste desafio, os modelos mais leves e baratos de cada provedor são suficientes.
-
-Atenção: modelos de embedding diferentes geram vetores com dimensões diferentes. A tabela de vetores é criada na primeira ingestão, já com a dimensão do modelo que você escolheu. Se você trocar de modelo de embeddings depois disso, a ingestão passa a falhar por incompatibilidade de dimensão. Nesse caso é responsabilidade sua apagar a collection existente (ou o volume do banco) e refazer a ingestão do zero com o novo modelo.
-
-## Requisitos
-
-### 1. Ingestão do PDF
-
-- O PDF deve ser dividido em chunks de 1000 caracteres com overlap de 150.
-- Cada chunk deve ser convertido em embedding.
-- Os vetores devem ser armazenados no banco de dados PostgreSQL com pgVector.
-
-### 2. Consulta via CLI
-
-Criar um script Python para simular um chat no terminal.
-
-Passos ao receber uma pergunta:
-
-- Vetorizar a pergunta.
-- Buscar os 10 resultados mais relevantes (k=10) no banco vetorial.
-- Montar o prompt e chamar a LLM.
-- Retornar a resposta ao usuário.
-
-Prompt a ser utilizado:
-
-```
-CONTEXTO:
-{resultados concatenados do banco de dados}
-
-REGRAS:
-- Responda somente com base no CONTEXTO.
-- Se a informação não estiver explicitamente no CONTEXTO, responda:
-  "Não tenho informações necessárias para responder sua pergunta."
-- Nunca invente ou use conhecimento externo.
-- Nunca produza opiniões ou interpretações além do que está escrito.
-
-EXEMPLOS DE PERGUNTAS FORA DO CONTEXTO:
-Pergunta: "Qual é a capital da França?"
-Resposta: "Não tenho informações necessárias para responder sua pergunta."
-
-Pergunta: "Quantos clientes temos em 2024?"
-Resposta: "Não tenho informações necessárias para responder sua pergunta."
-
-Pergunta: "Você acha isso bom ou ruim?"
-Resposta: "Não tenho informações necessárias para responder sua pergunta."
-
-PERGUNTA DO USUÁRIO:
-{pergunta do usuário}
-
-RESPONDA A "PERGUNTA DO USUÁRIO"
+```bash
+git clone https://github.com/jhonatanecardoficial/ingestao-busca-semantica-mba.git
+cd ingestao-busca-semantica-mba
 ```
 
-## Estrutura obrigatória do projeto
+---
 
-Faça um fork do repositório para utilizar a estrutura abaixo: https://github.com/devfullcycle/mba-ia-desafio-ingestao-busca
+### 2. Criar e Ativar o Ambiente Virtual
 
-```
-├── docker-compose.yml
-├── requirements.txt      # Dependências
-├── .env.example          # Template das variáveis de ambiente
-├── src/
-│   ├── ingest.py         # Script de ingestão do PDF
-│   ├── search.py         # Script de busca
-│   ├── chat.py           # CLI para interação com usuário
-├── document.pdf          # PDF para ingestão
-└── README.md             # Instruções de execução
-```
-
-## VirtualEnv para Python
-
-Crie e ative um ambiente virtual antes de instalar dependências:
-
-```
+No **Linux / macOS**:
+```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
 
-## Ordem de execução
-
-1. Subir o banco de dados:
-
+No **Windows (PowerShell)**:
+```powershell
+python -m venv venv
+.\venv\Scripts\Activate.ps1
 ```
+
+---
+
+### 3. Instalar as Dependências
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### 4. Configurar as Variáveis de Ambiente (`.env`)
+
+Copie o arquivo de exemplo para criar seu `.env`:
+
+```bash
+cp .env.example .env
+```
+*(No Windows PowerShell: `Copy-Item .env.example .env`)*
+
+Abra o arquivo `.env` e configure conforme o provedor que deseja utilizar:
+
+#### Opção A: Usando OpenAI
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=sua-chave-openai-aqui
+OPENAI_EMBEDDING_MODEL='text-embedding-3-small'
+OPENAI_CHAT_MODEL='gpt-4o-mini'
+
+POSTGRES_PORT=5432
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/rag
+PG_VECTOR_COLLECTION_NAME=pdf_documents
+PDF_PATH=document.pdf
+```
+
+#### Opção B: Usando Google Gemini
+```env
+LLM_PROVIDER=gemini
+GOOGLE_API_KEY=sua-chave-google-aqui
+GOOGLE_EMBEDDING_MODEL='models/text-embedding-004'
+GOOGLE_CHAT_MODEL='gemini-1.5-flash'
+
+POSTGRES_PORT=5432
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/rag
+PG_VECTOR_COLLECTION_NAME=pdf_documents
+PDF_PATH=document.pdf
+```
+
+> **Nota sobre portas no Windows**: Caso você já possua um PostgreSQL instalado localmente na porta `5432`, altere `POSTGRES_PORT=5435` e ajuste o `DATABASE_URL` para `postgresql+psycopg://postgres:postgres@localhost:5435/rag`.
+
+---
+
+### 5. Subir o Banco de Dados com pgVector
+
+Inicie os containers com o Docker Compose:
+
+```bash
 docker compose up -d
 ```
 
-2. Executar ingestão do PDF:
-
+Verifique se o container está rodando e saudável:
+```bash
+docker compose ps
 ```
+
+---
+
+### 6. Executar a Ingestão do PDF
+
+Execute o script de ingestão:
+
+```bash
 python src/ingest.py
 ```
 
-3. Rodar o chat:
+O script irá:
+1. Carregar as 34 páginas do `document.pdf`.
+2. Dividir o texto em chunks de **1000 caracteres** com **overlap de 150 caracteres** (`RecursiveCharacterTextSplitter`).
+3. Gerar os vetores de embedding para cada chunk.
+4. Salvar os vetores na collection configurada no PostgreSQL com `pgVector`.
 
+Saída esperada:
+```text
+Carregando PDF: document.pdf
+Total de páginas carregadas: 34
+Dividindo texto em chunks (chunk_size=1000, chunk_overlap=150)...
+Total de chunks gerados: 67
+Inicializando embeddings e conexão com PostgreSQL...
+Armazenando vetores no pgVector (collection: 'pdf_documents')...
+Ingestão concluída com sucesso no PostgreSQL com pgVector!
 ```
+
+---
+
+### 7. Interagir via Chat CLI
+
+Inicie a interface de terminal:
+
+```bash
 python src/chat.py
 ```
 
-## Entregável
+Exemplos de interação:
 
-Repositório público no GitHub contendo todo o código-fonte e README com instruções claras de execução do projeto.
+#### Pergunta dentro do contexto:
+```text
+Faça sua pergunta:
+
+PERGUNTA: Qual o faturamento da Empresa SuperTechIABrazil?
+RESPOSTA: O faturamento da Empresa SuperTechIABrazil foi de R$ 10.000.000,00 (10 milhões de reais).
+```
+
+#### Perguntas fora do contexto (deve recusar conforme regra):
+```text
+PERGUNTA: Quantos clientes temos em 2024?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+
+PERGUNTA: Qual é a capital da França?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+
+PERGUNTA: Você acha isso bom ou ruim?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+```
+
+Para encerrar o chat, digite `sair`, `exit` ou pressione `Ctrl+C`.
+
+---
+
+## 🔍 Teste Direto de Busca
+
+Você também pode testar uma pergunta diretamente via `src/search.py`:
+
+```bash
+python src/search.py "Qual o faturamento da Empresa SuperTechIABrazil?"
+```
+
+---
+
+## 📌 Requisitos Atendidos
+
+| Requisito | Status | Implementação |
+|---|---|---|
+| Split com chunks de 1000 e overlap 150 | ✅ Concluído | `RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)` em `src/ingest.py` |
+| Geração e armazenamento de embeddings | ✅ Concluído | `PGVector.from_documents` com OpenAI ou Gemini |
+| Banco de dados PostgreSQL + pgVector | ✅ Concluído | `docker-compose.yml` (`pgvector/pgvector:pg17`) |
+| Busca vetorial dos 10 mais relevantes (`k=10`) | ✅ Concluído | `similarity_search_with_score(query, k=10)` em `src/search.py` |
+| Prompt e regras estritas de recusa | ✅ Concluído | Template com regras inegociáveis e exemplos explícitos de recusa |
+| Interface CLI interativa | ✅ Concluído | `src/chat.py` com loop no terminal e saída formatada |
+| Repositório público com sufixo `-mba` | ✅ Concluído | Fork oficial em `jhonatanecardoficial/ingestao-busca-semantica-mba` |
