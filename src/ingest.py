@@ -49,14 +49,37 @@ def ingest_pdf():
     collection_name = get_collection_name()
 
     print(f"Armazenando vetores no pgVector (collection: '{collection_name}')...")
-    PGVector.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        connection=connection,
+    vector_store = PGVector(
+        embeddings=embeddings,
         collection_name=collection_name,
+        connection=connection,
         use_jsonb=True,
         pre_delete_collection=True
     )
+
+    import time
+    batch_size = 15
+    total_batches = (len(chunks) + batch_size - 1) // batch_size
+    print(f"Inserindo {len(chunks)} chunks em {total_batches} lotes de até {batch_size} chunks...")
+
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i : i + batch_size]
+        batch_num = i // batch_size + 1
+        print(f"  Processando lote {batch_num}/{total_batches} ({len(batch)} chunks)...")
+
+        for attempt in range(5):
+            try:
+                vector_store.add_documents(batch)
+                break
+            except Exception as e:
+                err_msg = str(e)
+                if "429" in err_msg or "Quota exceeded" in err_msg or "ResourceExhausted" in err_msg:
+                    wait_time = 25 * (attempt + 1)
+                    print(f"    Limite de requisições por minuto atingido (429). Aguardando {wait_time}s para retomar...")
+                    time.sleep(wait_time)
+                else:
+                    raise e
+
     print("Ingestão concluída com sucesso no PostgreSQL com pgVector!")
 
 

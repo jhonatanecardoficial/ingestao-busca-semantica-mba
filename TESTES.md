@@ -35,7 +35,7 @@ python -m unittest tests/test_rag.py -v
 
 ---
 
-## 📊 Evidência de Execução
+## 📊 Evidência de Execução dos Testes Automatizados
 
 ```text
 test_01_pdf_loader_and_chunking (tests.test_rag.TestRAGIngestaoBusca.test_01_pdf_loader_and_chunking)
@@ -51,10 +51,50 @@ Valida que a chain responde perguntas dentro do contexto. ... ok
 test_06_rag_chain_out_of_context_refusal (tests.test_rag.TestRAGIngestaoBusca.test_06_rag_chain_out_of_context_refusal)
 Valida recusa para perguntas fora do contexto. ... ok
 test_07_live_llm_if_key_configured (tests.test_rag.TestRAGIngestaoBusca.test_07_live_llm_if_key_configured)
-Se GOOGLE_API_KEY ou OPENAI_API_KEY estiver configurada, executa teste real com a LLM. ... skipped 'Nenhuma API Key (OpenAI ou Google) configurada no .env. Pulando teste com LLM ao vivo.'
+Se GOOGLE_API_KEY ou OPENAI_API_KEY estiver configurada, executa teste real com a LLM. ... ok
 
 ----------------------------------------------------------------------
-Ran 7 tests in 1.137s
+Ran 7 tests in 1.547s
 
-OK (skipped=1)
+OK
+[LIVE TEST] Provedor configurado e validado com sucesso!
+```
+
+---
+
+## 💬 Evidência de Execução ao Vivo com a LLM (Google Gemini)
+
+### 1. Ingestão no PostgreSQL (`pgVector`)
+```text
+Carregando PDF: document.pdf
+Total de páginas carregadas: 34
+Dividindo texto em chunks (chunk_size=1000, chunk_overlap=150)...
+Total de chunks gerados: 67
+Inicializando embeddings e conexão com PostgreSQL...
+Armazenando vetores no pgVector (collection: 'pdf_documents')...
+Inserindo 67 chunks em 5 lotes de até 15 chunks...
+  Processando lote 1/5 (15 chunks)...
+  Processando lote 2/5 (15 chunks)...
+  Processando lote 3/5 (15 chunks)...
+  Processando lote 4/5 (15 chunks)...
+  Processando lote 5/5 (7 chunks)...
+Ingestão concluída com sucesso no PostgreSQL com pgVector!
+```
+
+### 2. Perguntas Dentro do Contexto
+```text
+PERGUNTA: Qual o faturamento da Empresa SuperTechIABrazil?
+RESPOSTA: O faturamento da Empresa SuperTechIABrazil é R$ 10.000.000,00.
+```
+
+### 3. Perguntas Fora do Contexto (Recusa Obrigatória)
+```text
+PERGUNTA: Quantos clientes temos em 2024?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+
+PERGUNTA: Qual é a capital da França?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+
+PERGUNTA: Você acha isso bom ou ruim?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
 ```
